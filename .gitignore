@@ -8,3 +8,8 @@ package.json
 /tests-examples
 /uploads
 .env
+onco-env/
+__pycache__/
+*.pyc
+.env
+faiss_index/

@@ -87,35 +87,44 @@ def clean_extracted_text(text):
 
 
 @app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         start_time = datetime.now()
+
         selected_model = request.form.get('model')
+        query = request.form['query']
 
-
-        # Load the corresponding model and tokenizer
         if selected_model == 'llama':
             print("Llama-2 Loaded")
-            llm = load_tokenizer_and_llm_llama2() 
+            llm = load_tokenizer_and_llm_llama2()
             db = load_data_llama2()
+            response = process_query_llama2(query, llm, db)
+
         elif selected_model == 'mistral':
             print("Mistral Loaded")
-            llm = load_tokenizer_and_llm() 
+            llm = load_tokenizer_and_llm()
             db = load_data()
-        query = request.form['query']
-        # Process the query (and file if uploaded)
-        response = process_query(query, llm, db)
-        formatted_paragraphs = format_text_into_paragraphs(response['answer'])
-        print(formatted_paragraphs)
+            response = process_query(query, llm, db)
+
         end_time = datetime.now()
         total_seconds = (end_time - start_time).total_seconds()
+
         file_name = session.pop('file_name', None)
-        # Convert total_seconds into minutes and seconds
+
         minutes = int(total_seconds // 60)
         seconds = int(total_seconds % 60)
         time_formatted = f"{minutes} minutes, {seconds} seconds"
 
-        return render_template('result.html', paragraphs=formatted_paragraphs, sources=response['sources'],filename=file_name,time_taken=time_formatted,query=query)
+        return render_template(
+            'result.html',
+            answer=response['answer'],
+            sources=response['sources'],
+            filename=file_name,
+            time_taken=time_formatted,
+            query=query
+        )
 
     return render_template('index.html')
 

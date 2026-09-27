@@ -69,9 +69,7 @@
     <div class="container">
         <h2>Query Results</h2>
         <div class="result-text">
-            {% for paragraph in paragraphs %}
-                <p>{{ paragraph }}</p>
-            {% endfor %}
+            {{ answer | safe }}
         </div>
 
         <!-- Display sources as a list -->

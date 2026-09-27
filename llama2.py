@@ -66,7 +66,8 @@ def load_tokenizer_and_llm_llama2():
         model = "togethercomputer/llama-2-7b-chat",
         max_tokens = 2048,
         temperature=0.1,
-        together_api_key = os.getenv("env")
+        together_api_key=os.getenv("TOGETHER_API_KEY")
+        #together_api_key = os.getenv("env")
     )
 
     # quantization_config = BitsAndBytesConfig(
