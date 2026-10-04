@@ -2,6 +2,8 @@
 
 A research interface for asking oncology questions and reviewing generated interpretations alongside retrieved source references.
 
+The current application is designated **Baseline V1**, tagged `baseline-v1` at commit `b65ba6a`. Benchmark and test this version before further improvements. See [the baseline record](docs/research/baseline_v1.md) for configuration, index fingerprints, and comparison policy.
+
 ## Run locally
 
 From the repository root:
