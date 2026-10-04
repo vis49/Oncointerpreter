@@ -1,0 +1,25 @@
+# Test/import dependencies only; do not replace the research runtime requirements.
+# LangChain/provider versions match the working local environment.
+Flask==3.0.3
+Werkzeug==3.0.2
+langchain==0.1.16
+langchain-community==0.0.32
+langchain-core==0.1.53
+langchain-openai==0.1.7
+langchain-together==0.1.2
+openai==1.109.1
+numpy==1.26.4
+streamlit==1.29.0
+nest-asyncio==1.5.8
+Markdown==3.11
+python-dotenv==1.2.3
+beautifulsoup4==4.15.0
+html2text==2025.4.15
+playwright==1.63.0
+pdf2image==1.16.3
+pytesseract==0.3.10
+Pillow==10.1.0
+requests==2.31.0
+# Only used to import the real app; CI uses fake LLM/retriever fixtures.
+# Install from the PyTorch CPU index before installing this file.
+torch==2.5.1

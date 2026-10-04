@@ -1,44 +1,63 @@
-# Oncointerpreter.ai enables interactive, personalized summarization of cancer diagnostics data
+# Oncointerpreter.ai
 
-Emerging applications of artificial generative intelligence are addressing crucial needs for rapid
-processing, interpretation and summarization of complex biomedical data. We develop
-Oncointerpreter.ai built on the Mistral-7B and Llama-2 7B large language models trained on a local,
-curated corpus to offer personalized summarization of clinical cancer genomic and pathological data in
-real time via a graphical interface.
+A research interface for asking oncology questions and reviewing generated interpretations alongside retrieved source references.
 
+## Run locally
 
-### How to Run
+From the repository root:
 
-To get Oncointerpreter.ai up and running on your local machine, follow these simple steps:
-
-```bash
-python3 page.py
-```
-**You must have CUDA configured on your machine to run this application**
-
-
-### Libraries Needed
-
-All the libraries needed for the application can simply be install via requirements.txt
-
-```bash
-pip install -r requirements.txt
+```powershell
+.\onco-env\Scripts\python.exe page.py
 ```
 
+Open http://127.0.0.1:5000. The Flask entry point remains `page.py`; `flask --app page run` and the Dockerfile's `FLASK_APP=page.py` still point to it.
 
-### Description of the Files
+Save your Together AI key once in `%LOCALAPPDATA%\Oncointerpreter\.env`:
 
-- **llama2.py**: Contains the code for the Llama2 portion, integrating Llama2 models to enhance the analytical capabilities of the application.
-- **mistral.py**: Houses the Mistral-7B model implementation, contributing to the application's ability to understand and interpret complex medical texts.
-- **gpt-neo.py**: Incorporates the GPT-Neo model, adding to the app's depth in generating human-like text and responses.
-- **page.py**: The main UI of the app. This script initializes and runs the web interface, serving as the primary point of interaction for users.
+```dotenv
+TOGETHER_API_KEY=your_actual_key
+```
 
+Restart the server after changing it. This plain-text file is outside the OneDrive project; keep it private. A Git-ignored project `.env` is also supported. Existing environment variables take priority, followed by the local AppData file, then the project file. `.env.example` contains only a blank template.
 
-### Overview of Architecture
+## Current workflow
 
-![Architecture](figure.png "System Architecture")
+Type a question or paste relevant case/report text into the question field, then select **Analyze**. **Source index options** offers existing-index reuse or a rebuild with a backup. Results show the generated interpretation and the existing retrieved-source information.
 
+The current pipeline uses Together AI with `openai/gpt-oss-120b` (temperature 0.1, max_tokens 2048), as configured in `rag_pipeline.py`. The interface identifies the provider without duplicating a model selector. Embeddings use BAAI/bge-large-en-v1.5 and select CUDA when available, otherwise CPU.
 
-### Non-Commercial Research Only License
+The original PDF/image routes perform OCR into `report.txt`, but the active pipeline does not read that file. They remain accessible as historical utilities at `/upload_pdf` and `/upload_image` and are not advertised as analysis inputs. Paste relevant text into the question field instead. OCR still requires Tesseract and PDF conversion requires Poppler.
+
+## Project files
+
+- `page.py`: Flask application, query route and retained extraction routes.
+- `rag_pipeline.py`: active retrieval and Together AI generation; renamed from `mistral.py` with its contents preserved.
+- `templates/`, `static/`: Jinja templates, shared responsive CSS and small interaction scripts.
+- `nci_chromium_loader.py`: existing NCI readiness behavior.
+- `source_provenance.py`: existing entry metadata and citation display preparation.
+- `legacy/llama2.py`, `legacy/gpt.py`: historical implementations retained unchanged; not imported by the app.
+- `debug_scrape.py`, `debug_provenance.py`: reproduction diagnostics.
+- `docs/research/ui_cleanup_findings.md`: UI audit, changes and verification notes.
+
+Install the existing dependencies with `pip install -r requirements.txt`. No frontend framework or new dependency was added by the UI cleanup. The Dockerfile is retained as historical deployment configuration; its older base image/system setup was not modernized or validated here.
+
+## Verification
+
+```powershell
+.\onco-env\Scripts\python.exe -m unittest test_source_provenance test_index_options -v
+.\onco-env\Scripts\python.exe verify_ui.py
+```
+
+The UI verification boots the real Flask application with local LLM/retriever fixtures and captures desktop/mobile screenshots. It makes no Together API calls and does not rebuild the saved index. It also runs without a saved index or local baseline snapshots; historical byte comparisons are performed only when a snapshot exists.
+
+GitHub Actions runs these Python tests and Chromium UI checks on pushes and pull requests to `main`/`master`, or manually through Actions. The workflow uses Python 3.11, a CPU-only test environment from `requirements-ci.txt`, and no API secrets or saved index. Test logs and screenshots are uploaded as `oncointerpreter-test-results`. The historical Node/Playwright configuration is no longer used by CI. This test environment does not replace the research runtime in `requirements.txt`.
+
+## Research provenance
+
+Historical diagnostic reports and patch snapshots are in `docs/research/` and keep their original filenames and line references. Generated run artifacts, uploads, local environments, logs, and FAISS indexes/backups are Git-ignored and remain local. References there to `mistral.py` refer to the module now called `rag_pipeline.py`. Original Mistral/LLaMA experiments are historical, not selectable models in the current UI. Backend prompt conventions and commented research code remain unchanged.
+
+![Original architecture](figure.png "Original project architecture")
+
+## Non-Commercial Research Only License
 
 ©2023-2024 Rutgers, The State University of New Jersey, All rights reserved. Do not copy or reproduce without permission.

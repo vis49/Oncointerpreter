@@ -1,0 +1,51 @@
+diff --git a/nci_chromium_loader.py b/nci_chromium_loader.py
+new file mode 100644
+--- /dev/null
++++ b/nci_chromium_loader.py
+@@ -0,0 +1,38 @@
++"""Wait for NCI cancer-terms expand pages to finish rendering."""
++from urllib.parse import urlparse
++
++from langchain_community.document_loaders import AsyncChromiumLoader
++from playwright.async_api import async_playwright
++
++DICTIONARY_READY = r"""() => {
++    const root = document.querySelector('#NCI-glossary-app-root');
++    const match = root?.querySelector('.dictionary-list-container h4')
++        ?.textContent.match(/^([\d,]+) results? found for:/);
++    if (!match) return false;
++    const expected = Number(match[1].replaceAll(',', ''));
++    const terms = root.querySelectorAll('dl.dictionary-list dt dfn');
++    const definitions = root.querySelectorAll('dl.dictionary-list dd.definition');
++    return expected > 0 && terms.length === expected &&
++        definitions.length === expected &&
++        [...definitions].every(d => d.textContent.trim().length > 0);
++}"""
++
++
++class NciReadyChromiumLoader(AsyncChromiumLoader):
++    """Proposed targeted override; all other URLs retain the installed behavior."""
++
++    async def ascrape_playwright(self, url):
++        parsed = urlparse(url)
++        if not (parsed.hostname == "www.cancer.gov" and
++                parsed.path.startswith("/publications/dictionaries/cancer-terms/expand/")):
++            return await super().ascrape_playwright(url)
++        async with async_playwright() as p:
++            browser = await p.chromium.launch(headless=True)
++            try:
++                page = await browser.new_page()
++                await page.goto(url)
++                await page.wait_for_function(DICTIONARY_READY, timeout=45000)
++                return await page.content()
++            finally:
++                await browser.close()
++
+diff --git a/mistral.py b/mistral.py
+--- a/mistral.py
++++ b/mistral.py
+@@ -17,3 +17,3 @@
+ from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter
+-from langchain_community.document_loaders import AsyncChromiumLoader
++from nci_chromium_loader import NciReadyChromiumLoader as AsyncChromiumLoader
+ from langchain_community.document_transformers import Html2TextTransformer

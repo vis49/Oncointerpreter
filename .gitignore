@@ -1,15 +1,43 @@
+# Local credentials (commit only the empty example)
+.env
+.env.*
+!.env.example
+
+# Python environments and generated caches
+onco-env/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# User inputs and local OCR output
+/uploads/
+/report.txt
+/extracted_text.txt
+
+# Generated indexes, backups, and incomplete builds
+/faiss_index/
+/faiss_index_backup_*/
+/faiss_index_build_*/
+
+# Reproducible diagnostics: keep scripts/reports, not local run artifacts
+/debug_scrape_runs/
+/provenance_diagnostics/
+/ui_diagnostics/
+*.log
+
+# JavaScript/browser test dependencies and output
 node_modules/
-package.json
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
-/tests
-/tests-examples
-/uploads
-.env
-onco-env/
-__pycache__/
-*.pyc
-.env
-faiss_index/
+
+# OS/editor temporary files
+.DS_Store
+Thumbs.db
+*.swp
+*~

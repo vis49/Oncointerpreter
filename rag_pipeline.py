@@ -15,12 +15,13 @@ import time
 from datetime import datetime
 
 from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import AsyncChromiumLoader
+from nci_chromium_loader import NciReadyChromiumLoader as AsyncChromiumLoader
 from langchain_community.document_transformers import Html2TextTransformer
 from langchain_community.vectorstores import Chroma, FAISS
 import nest_asyncio
 
-from langchain.schema.runnable import RunnablePassthrough
+from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
+from source_provenance import prepare_provenance, annotate_chunks, display_sources, invoke_with_baseline_context
 
 import textwrap
 
@@ -31,6 +32,13 @@ from playwright.async_api import async_playwright
 import asyncio
 
 import os
+import tempfile
+from dotenv import load_dotenv
+
+# Keep local credentials outside the OneDrive project when running on Windows.
+if os.getenv("LOCALAPPDATA"):
+    load_dotenv(os.path.join(os.environ["LOCALAPPDATA"], "Oncointerpreter", ".env"))
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 import torch
 
@@ -55,13 +63,24 @@ def get_prompt(instruction, sys_prompt):
 
 
 
+class TogetherKeyConfigurationError(ValueError):
+    """A missing Together key, reported without exposing credential values."""
+
+
 def load_tokenizer_and_llm():
+
+    api_key = os.getenv("TOGETHER_API_KEY", "").strip()
+    if not api_key:
+        raise TogetherKeyConfigurationError(
+            "Together AI key is missing. Save TOGETHER_API_KEY in "
+            "%LOCALAPPDATA%\\Oncointerpreter\\.env, then restart the app."
+        )
 
     llm = ChatTogether(
         model="openai/gpt-oss-120b",
         max_tokens = 2048,
         temperature=0.1,
-        together_api_key=os.getenv("TOGETHER_API_KEY")
+        together_api_key=api_key
         #together_api_key = os.getenv("env")
     )
 
@@ -123,10 +142,7 @@ def process_llm_response(llm_response):
         extensions=['tables', 'fenced_code']
     )
 
-    sources_list = [
-        source.metadata['source']
-        for source in llm_response['context']
-    ]
+    sources_list = display_sources(llm_response['context'])
 
     return {
         "answer": response_html,
@@ -137,7 +153,7 @@ def process_llm_response(llm_response):
 
 
 
-def load_data():
+def load_data(force_rebuild=False):
 
     embeddings = HuggingFaceBgeEmbeddings(
         model_name="BAAI/bge-large-en-v1.5",
@@ -155,7 +171,7 @@ def load_data():
     # LOAD EXISTING INDEX
     # ---------------------------------------------------------
 
-    if os.path.exists(index_path):
+    if os.path.exists(index_path) and not force_rebuild:
         log("Saved FAISS index found. Loading from disk...")
 
         start = time.perf_counter()
@@ -178,7 +194,10 @@ def load_data():
     # OTHERWISE BUILD IT
     # ---------------------------------------------------------
 
-    log("No saved FAISS index found. Building new index...")
+    if force_rebuild:
+        log("Index rebuild requested. Scraping and building a new index...")
+    else:
+        log("No saved FAISS index found. Building new index...")
 
     articles = [
         "https://www.cancer.gov/resources-for/patients",
@@ -201,15 +220,18 @@ def load_data():
 
     html2text = Html2TextTransformer()
     docs_transformed = html2text.transform_documents(docs)
+    provenance_pages = prepare_provenance(docs, docs_transformed)
 
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
-        chunk_overlap=20
+        chunk_overlap=20,
+        add_start_index=True
     )
 
     chunked_documents = text_splitter.split_documents(
         docs_transformed
     )
+    annotate_chunks(chunked_documents, provenance_pages)
 
     log("Embedding chunks and building FAISS...")
 
@@ -224,7 +246,21 @@ def load_data():
 
     log("Saving FAISS index to disk...")
 
-    db.save_local(index_path)
+    # Save fully before replacing the current index; retain it for reproduction.
+    staged_path = tempfile.mkdtemp(prefix="faiss_index_build_", dir=".")
+    db.save_local(staged_path)
+
+    backup_path = None
+    if os.path.exists(index_path):
+        backup_path = f"{index_path}_backup_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
+        os.rename(index_path, backup_path)
+        log(f"Previous FAISS index preserved in {backup_path}")
+    try:
+        os.rename(staged_path, index_path)
+    except Exception:
+        if backup_path is not None:
+            os.rename(backup_path, index_path)
+        raise
 
     log("FAISS index saved.")
 
@@ -270,7 +306,7 @@ def process_query(query, llm, db):
             "context": retriever,
             "question": RunnablePassthrough()
         }
-        | llm_chain
+        | RunnableLambda(lambda inputs: invoke_with_baseline_context(llm_chain, inputs))
     )
 
     log(

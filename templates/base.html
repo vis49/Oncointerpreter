@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Oncointerpreter{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+        <a class="brand" href="{{ url_for('index') }}" aria-label="Oncointerpreter home"><span class="brand-mark" aria-hidden="true">O</span>Oncointerpreter<span class="brand-domain">.ai</span></a>
+        <span class="research-label">Research workspace</span>
+    </header>
+    <main id="main" class="workspace">{% block content %}{% endblock %}</main>
+    <footer class="site-footer"><span>Oncology research, in context.</span><span>Generated with Together AI</span></footer>
+</body>
+</html>

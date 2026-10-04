@@ -1,11 +1,10 @@
-from mistral import load_tokenizer_and_llm, load_data, process_llm_response, process_query
+from rag_pipeline import load_tokenizer_and_llm, load_data, process_llm_response, process_query, TogetherKeyConfigurationError
 from flask import Flask, request, render_template, redirect, url_for, jsonify, g, session
 from werkzeug.utils import secure_filename
 import os
 import textwrap
 import time
 from extract_image import extract_image
-from llama2 import load_data_llama2, load_tokenizer_and_llm_llama2, process_query_llama2
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads/'
@@ -87,26 +86,18 @@ def clean_extracted_text(text):
 
 
 @app.route('/', methods=['GET', 'POST'])
-@app.route('/', methods=['GET', 'POST'])
-@app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         start_time = datetime.now()
 
-        selected_model = request.form.get('model')
         query = request.form['query']
-
-        if selected_model == 'llama':
-            print("Llama-2 Loaded")
-            llm = load_tokenizer_and_llm_llama2()
-            db = load_data_llama2()
-            response = process_query_llama2(query, llm, db)
-
-        elif selected_model == 'mistral':
-            print("Mistral Loaded")
+        index_mode = request.form.get('index_mode', 'existing')
+        try:
             llm = load_tokenizer_and_llm()
-            db = load_data()
-            response = process_query(query, llm, db)
+        except TogetherKeyConfigurationError as error:
+            return render_template('index.html', error=str(error), query=query, index_mode=index_mode), 400
+        db = load_data(force_rebuild=index_mode == 'rebuild')
+        response = process_query(query, llm, db)
 
         end_time = datetime.now()
         total_seconds = (end_time - start_time).total_seconds()

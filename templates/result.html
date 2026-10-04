@@ -1,94 +1,17 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Query Result</title>
-    <style>
-        body {
-            background-color: #ADD8E6; /* Light Blue */
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding-top: 50px;
-        }
-        .container {
-            width: 60%;
-            margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .result-text {
-            text-align: left;
-            margin-top: 20px;
-            line-height: 1.6;
-        }
-        .result-text p {
-            margin-bottom: 5px; /* Reduced space between paragraphs */
-        }
-        /* Style for source links */
-        .source-link {
-            color: #0000EE; /* Standard link color */
-            text-decoration: underline; /* Underline to indicate it's a link */
-        }
-
-        ul {
-            list-style-type: disc; /* or 'none' if you want to hide bullets */
-            padding-left: 20px; /* Adjust this value as needed */
-        }
-
-        li {
-            margin-left: 5px; /* Reduce left margin for list items */
-            text-align: left; /* Align text to the left */
-        }
-
-        .summary-box {
-            border: 2px solid #3498db; /* Blue border */
-            border-radius: 10px; /* Rounded corners */
-            padding: 15px; /* Padding inside the box */
-            margin-top: 30px; /* Space above the box */
-            text-align: left; /* Align text to the left inside the box */
-            background-color: #f3f3f3; /* Light grey background */
-        }
-
-        .new-query-btn {
-            width: 50%;
-            background-color: #4CAF50;
-            color: white;
-            padding: 14px 20px;
-            margin: 8px 0;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .new-query-btn:hover {
-            background-color: #07520b;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2>Query Results</h2>
-        <div class="result-text">
-            {{ answer | safe }}
-        </div>
-
-        <!-- Display sources as a list -->
-        <h3>Sources:</h3>
-        <ul>
-            {% for source in sources %}
-                <li><a href="{{ source }}" target="_blank">{{ source }}</a></li>
-            {% endfor %}
-        </ul>
-        <a href="/" class="new-query-btn">New Query</a>
-    </div>
-
-    <div class="summary-box">
-        <h3>Summary</h3>
-        <p><strong>Query:</strong> {{ query }}</p>
-        {% if filename %}
-            <p><strong>File Uploaded:</strong> {{ filename }}</p>
-        {% endif %}
-        <p><strong>Time Taken:</strong> {{ time_taken }}</p>
-    </div>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Results · Oncointerpreter{% endblock %}
+{% block content %}
+<div class="page-heading result-heading"><div><p class="eyebrow">Research interpretation</p><h1>Your results</h1></div><a href="{{ url_for('index') }}" class="button secondary">New question</a></div>
+<section class="query-summary" aria-labelledby="question-heading"><div><h2 id="question-heading">Your question</h2><p>{{ query }}</p></div>{% if time_taken %}<span class="time-label">{{ time_taken }}</span>{% endif %}</section>
+<section class="card interpretation" aria-labelledby="answer-heading"><div class="section-heading"><span class="step-number">02</span><h2 id="answer-heading">Interpretation</h2></div><div class="result-text">{{ answer | safe }}</div></section>
+<section class="card sources" aria-labelledby="sources-heading">
+    <div class="section-heading"><span class="step-number">03</span><h2 id="sources-heading">Retrieved sources</h2><span class="count">{{ sources|length }}</span></div>
+    <p class="field-hint">References retrieved for this response.</p>
+    <ul class="source-list">
+    {% for source in sources %}
+        <li>{% if source is string %}<a href="{{ source }}" target="_blank" rel="noopener noreferrer">{{ source }}</a>
+        {% else %}<strong>{{ source.label }}</strong>{% if source.url %}<a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">{{ source.url }}</a>{% endif %}{% endif %}</li>
+    {% else %}<li class="empty-state">No sources were returned for this response.</li>{% endfor %}
+    </ul>
+</section>
+{% endblock %}

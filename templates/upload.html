@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Text extraction · Oncointerpreter{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('index') }}">← Back to question</a>
+<section class="card extraction-card">
+    <p class="eyebrow">Historical utility</p><h1>Extract text from {{ file_kind }}</h1>
+    <p class="field-hint">This utility saves extracted text to a local report. Uploaded files are not automatically included in the current analysis workflow. Paste relevant text into your question to use it.</p>
+    <form id="uploadForm" action="{{ url_for(upload_endpoint) }}" method="post" enctype="multipart/form-data">
+        <label for="file">{{ file_kind }} file</label><input id="file" type="file" name="file" accept="{{ accept }}" required>
+        <button class="button primary" type="submit">Extract text</button><p class="status" role="status" aria-live="polite"></p>
+    </form>
+</section>
+<script src="{{ url_for('static', filename='upload.js') }}" defer></script>
+{% endblock %}

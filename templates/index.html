@@ -1,178 +1,33 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Cancer Diagnostics LLM</title>
-    <style>
-        body {
-            background-color: #ADD8E6; /* Light Blue */
-            font-family: Arial, sans-serif;
-            margin: 0; /* Remove default margin */
-            padding: 0; /* Remove default padding */
-        }
-        .header {
-            text-align: left;
-            padding-left: 5%; /* Increase left padding to move title to the left */
-            padding-top: 10px; /* Add some padding at the top */
-        }
-        .header h2 {
-            font-size: 36px; /* Larger header font size */
-            margin: 0; /* Remove default margin to shift up */
-        }
-        .horizontal-divider {
-            height: 2px;
-            background-color: #3498db; /* Blue color */
-            width: 100%; /* Span across whole page */
-            margin: 20px 0; /* Add some space above and below the divider */
-        }
-        .container {
-            display: flex;
-            justify-content: space-between;
-            width: 70%;
-            margin: 20px auto; /* Center container with margin */
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .left-panel {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            padding-right: 20px;
-        }
-        .right-panel {
-            width: 60%; /* Adjust if necessary to keep query box size consistent */
-        }
-        .vertical-divider {
-            width: 2px;
-            height: auto; /* Adjust height as necessary */
-            background-color: #3498db; /* Blue color */
-            margin: 0 20px;
-        }
-        button {
-            padding: 8px 12px;
-            margin: 5px 0;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .model-selector {
-            margin-top: 20px;
-        }
-        .model-selector label.header {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 10px;
-        }
-        .upload-buttons, .model-selector {
-            margin-bottom: 15px; /* Space below each section */
-        }
-        .model-selector input[type="radio"] + label {
-            margin-left: 5px;
-            font-weight: normal;
-            cursor: pointer;
-        }
-        textarea {
-            width: 100%; /* Keep query box size consistent */
-            padding: 10px;
-            margin-top: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            min-height: 100px;
-            resize: vertical;
-        }
-        .upload-buttons, .model-selector {
-            margin-bottom: 20px; /* Space between sections */
-        }
-
-        .knowledge-base-selector {
-            margin-top: 20px;
-        }
-        .knowledge-base-selector label.header {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 10px;
-        }
-        .knowledge-base-selector input[type="radio"] + label {
-            margin-left: 5px;
-            font-weight: normal;
-            cursor: pointer;
-        }
-
-        .parameters-section {
-            margin-top: 20px;
-        }
-        .parameters-section label.header {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 10px;
-        }
-        .parameters-section input[type="number"] {
-            width: 50%; /* Adjust width as needed */
-            padding: 5px;
-            margin: 5px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .upload-prompt {
-            margin-top: 20px; /* Add some space above the text */
-            font-size: 16px; /* Adjust font size as needed */
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h2>Oncointerpreter.ai</h2>
-    </div>
-    <div class="horizontal-divider"></div> <!-- Horizontal Divider -->
-    <div class="container">
-        <div class="left-panel">
-            <p class="upload-prompt">Upload specific case report (optional):</p> <!-- Added prompt -->
-            <div class="upload-buttons">
-                <button onclick="location.href='/upload_pdf'">Upload PDF</button>
-                <button onclick="location.href='/upload_image'">Upload Image</button>
-            </div>
-            <div class="knowledge-base-selector">
-                <label class="header">Select a Knowledge Base:</label>
-                <input type="radio" id="generic" name="knowledgeBase" value="generic" checked>
-                <label for="generic">Generic</label><br>
-                <input type="radio" id="curated" name="knowledgeBase" value="curated">
-                <label for="curated">Curated Cancer Specific Corpus</label>
-            </div>
-            <div class="parameters-section">
-                <label class="header">Parameters:</label>
-                <label for="numTokens"># of tokens:</label>
-                <input type="number" id="numTokens" name="numTokens" min="0" step="1">
-            </div>
-        </div>
-        <div class="vertical-divider"></div>
-        <div class="right-panel">
-            <form method="post" action="/" id="queryForm">
-                <div class="model-selector">
-                    <label>Select Model:</label>
-                    <input type="radio" id="llama" name="model" value="llama" checked>
-                    <label for="llama">LLaMA</label>
-                    <input type="radio" id="mistral" name="model" value="mistral">
-                    <label for="mistral">Mistral</label>
-                </div>
-                <label for="query">Enter your query:</label><br>
-                <textarea id="query" name="query" required oninput="autoResize(this)"></textarea><br>
-                <input type="submit" value="Submit Query">
-            </form>
-        </div>
-    </div>
-    <script>
-        function autoResize(textArea) {
-            textArea.style.height = 'auto';
-            textArea.style.height = textArea.scrollHeight + 'px';
-        }
-    </script>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+    <p class="eyebrow">Oncology research</p>
+    <h1>Explore the evidence.</h1>
+    <p class="lead">Ask a question and review an interpretation alongside its retrieved sources.</p>
+</div>
+<div class="input-layout">
+    <section class="card input-card" aria-labelledby="input-heading">
+        <div class="section-heading"><span class="step-number">01</span><h2 id="input-heading">Your question</h2></div>
+        {% if error %}<div class="alert" role="alert">{{ error }}</div>{% endif %}
+        <form method="post" action="{{ url_for('index') }}" id="queryForm" data-busy-form>
+            <label for="query">Question or case context</label>
+            <p class="field-hint" id="query-hint">Type a question, or paste relevant report text and the question you want to explore.</p>
+            <textarea id="query" name="query" required aria-describedby="query-hint" placeholder="What would you like to understand?">{{ query|default('') }}</textarea>
+            <details class="settings" {% if index_mode == 'rebuild' %}open{% endif %}>
+                <summary>Source index options</summary>
+                <fieldset id="index-options">
+                    <legend class="sr-only">Source index</legend>
+                    <label class="choice" for="index-existing"><input type="radio" id="index-existing" name="index_mode" value="existing" {% if index_mode != 'rebuild' %}checked{% endif %}><span><strong>Use existing index</strong><small>Builds an index if none has been saved.</small></span></label>
+                    <label class="choice" for="index-rebuild"><input type="radio" id="index-rebuild" name="index_mode" value="rebuild" {% if index_mode == 'rebuild' %}checked{% endif %}><span><strong>Rebuild index</strong><small>Refresh sources before answering. This may take several minutes; the previous index is kept as a backup.</small></span></label>
+                </fieldset>
+            </details>
+            <div class="form-actions"><button class="button primary" type="submit" data-busy-label="Analyzing…">Analyze <span aria-hidden="true">&rarr;</span></button><span class="status" role="status" aria-live="polite"></span></div>
+        </form>
+    </section>
+    <aside class="context-panel" aria-labelledby="workflow-heading">
+        <p class="eyebrow">A focused workflow</p><h2 id="workflow-heading">From question<br>to context.</h2>
+        <ol class="workflow"><li><strong>Provide context</strong><p>Include the details relevant to your question.</p></li><li><strong>Review the interpretation</strong><p>Read the generated response in one place.</p></li><li><strong>Explore the sources</strong><p>Follow the references returned by the research corpus.</p></li></ol>
+        <p class="aside-note">For research use. Review the original sources when interpreting a response.</p>
+    </aside>
+</div>
+{% endblock %}
